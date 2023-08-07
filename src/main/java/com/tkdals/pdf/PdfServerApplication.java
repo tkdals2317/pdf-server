@@ -1,4 +1,4 @@
-package com.tkdals.pdfserver;
+package com.tkdals.pdf;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

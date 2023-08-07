@@ -1,4 +1,4 @@
-package com.tkdals.pdfserver;
+package com.tkdals.pdf;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
