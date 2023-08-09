@@ -30,6 +30,8 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 
     implementation 'org.seleniumhq.selenium:selenium-java:4.11.0'
+    implementation 'io.github.bonigarcia:webdrivermanager:5.4.1'
+    implementation 'org.seleniumhq.selenium:selenium-devtools-v104:4.5.3'
 }
 
 tasks.named('test') {
