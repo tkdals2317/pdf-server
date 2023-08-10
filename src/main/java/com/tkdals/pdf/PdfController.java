@@ -1,14 +1,18 @@
 package com.tkdals.pdf;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
+import org.openqa.selenium.By;
 import org.openqa.selenium.Cookie;
 import org.openqa.selenium.OutputType;
+import org.openqa.selenium.PageLoadStrategy;
 import org.openqa.selenium.Pdf;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.devtools.DevTools;
 import org.openqa.selenium.devtools.v113.network.Network;
 import org.openqa.selenium.print.PrintOptions;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -17,19 +21,15 @@ import org.springframework.web.bind.annotation.RestController;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.Optional;
+import java.util.Set;
 
 @RestController
 public class PdfController {
 
     @GetMapping("/generate-pdf")
-    public ResponseEntity<byte[]> generatePdf(@RequestParam("url") String url, String sessionId) throws InterruptedException {
-        // 성공
-        //System.setProperty("webdriver.chrome.driver", "C:\\MIDAS\\pdf-server\\src\\main\\resources\\static\\driver\\104\\chromedriver104.exe");
-        // 실패
-        //System.setProperty("webdriver.http.factory", "jdk-http-client");
-
-        //options.setBinary("C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe");
+    public ResponseEntity<byte[]> generatePdf(@RequestParam("url") String url, String sessionId)  {
 
         WebDriverManager.chromedriver().setup();
         ChromeOptions options = new ChromeOptions();
@@ -39,21 +39,24 @@ public class PdfController {
         driver.get(url);
         Cookie cookie = new Cookie("SESSION_mrs", sessionId);
         driver.manage().addCookie(cookie);
-        driver.navigate().refresh();
-
-        try {
-            Pdf pdf = driver.print(new PrintOptions());
-            Files.write(Paths.get("./generate.pdf"), OutputType.BYTES.convertFromBase64Png(pdf.getContent()));
-
-            return ResponseEntity.ok()
-                    .header("Content-Type", "application/pdf")
-                    .header("Content-Disposition", "attachment; filename=generated-pdf.pdf")
-                    .body(null);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } finally {
-            driver.quit();
+        driver.navigate().to(url);
+        if (driver.findElements(By.className("wrapResumeAll")).size() > 0){
+            WebDriverWait webDriverWait = new WebDriverWait(driver, Duration.ofMinutes(1));
+            webDriverWait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.id("accPrint-1")));
+            System.out.println("렌더링 확인");
+            try {
+                Pdf pdf = driver.print(new PrintOptions());
+                Files.write(Paths.get("./generate.pdf"), OutputType.BYTES.convertFromBase64Png(pdf.getContent()));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            } finally {
+                driver.quit();
+            }
         }
+        return ResponseEntity.ok()
+                .header("Content-Type", "application/pdf")
+                .header("Content-Disposition", "attachment; filename=generated-pdf.pdf")
+                .body(null);
     }
 }
 
