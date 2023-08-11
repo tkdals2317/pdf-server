@@ -14,6 +14,7 @@ import org.openqa.selenium.print.PrintOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StopWatch;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -29,7 +30,7 @@ import java.util.Set;
 public class PdfController {
 
     @GetMapping("/generate-pdf")
-    public ResponseEntity<byte[]> generatePdf(@RequestParam("url") String url, String sessionId)  {
+    public ResponseEntity<byte[]> generatePdf(@RequestParam("url") String url, String sessionId, String fileName)  {
 
         WebDriverManager.chromedriver().setup();
         ChromeOptions options = new ChromeOptions();
@@ -40,18 +41,17 @@ public class PdfController {
         Cookie cookie = new Cookie("SESSION_mrs", sessionId);
         driver.manage().addCookie(cookie);
         driver.navigate().to(url);
-        if (driver.findElements(By.className("wrapResumeAll")).size() > 0){
-            WebDriverWait webDriverWait = new WebDriverWait(driver, Duration.ofMinutes(1));
-            webDriverWait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.id("accPrint-1")));
-            System.out.println("렌더링 확인");
-            try {
-                Pdf pdf = driver.print(new PrintOptions());
-                Files.write(Paths.get("./generate.pdf"), OutputType.BYTES.convertFromBase64Png(pdf.getContent()));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            } finally {
-                driver.quit();
-            }
+
+        WebDriverWait webDriverWait = new WebDriverWait(driver, Duration.ofMinutes(1));
+        webDriverWait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.className("accDone")));
+
+        try {
+            Pdf pdf = driver.print(new PrintOptions());
+            Files.write(Paths.get(fileName+".pdf"), OutputType.BYTES.convertFromBase64Png(pdf.getContent()));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } finally {
+            driver.quit();
         }
         return ResponseEntity.ok()
                 .header("Content-Type", "application/pdf")
