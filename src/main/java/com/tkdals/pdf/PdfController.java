@@ -57,10 +57,8 @@ public class PdfController {
         options.addArguments("--dns-prefetch-disable");
         options.addArguments("--disable-gpu");
         options.setPageLoadTimeout(Duration.ofSeconds(600000));
-
         ChromeDriver driver = new ChromeDriver(options);
         driver.manage().window().maximize();
-
         DevTools devTools = driver.getDevTools();
         devTools.createSession();
         devTools.send(Network.enable(Optional.empty(), Optional.empty(), Optional.empty()));
@@ -75,14 +73,17 @@ public class PdfController {
 
         log.info("\nChrome Driver navigate to URL : {}\nsessionId : {}\nfileName : {}", url, sessionId, fileName);
         WebDriverWait webDriverWait = new WebDriverWait(driver, Duration.ofSeconds(600));
-        webDriverWait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.className(" ")));
+        webDriverWait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.className("renderDone")));
         log.info("Page Rendering Complete!");
         try {
+            long start = System.currentTimeMillis();
             log.info("PDF 추출 시작!");
             PrintOptions printOptions = new PrintOptions();
             Pdf pdf = driver.print(printOptions);
             Files.write(Paths.get(fileName+".pdf"), OutputType.BYTES.convertFromBase64Png(pdf.getContent()));
             log.info("PDF 추출 완료!");
+            long end = System.currentTimeMillis();
+            log.info("추출 시간" + (start-end)/1000);
         } catch (IOException e) {
             log.error(ExceptionUtils.getStackTrace(e));
             throw new RuntimeException(e);
